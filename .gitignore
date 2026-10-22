@@ -1,0 +1,32 @@
+# ---- build artefacts -------------------------------------------------------
+src/extender/dist/
+build/
+*.so
+*.o
+*.a
+*.dylib
+*.exe
+*.dll
+*.test
+
+# agent binaries (the source tree is tracked, compiled payloads are not)
+src/agent/jinxed_*
+src/agent/agent
+src/agent/zz_profile_gen.go.bak
+
+# ---- runtime / local testing ----------------------------------------------
+*.log
+data/
+server.log
+listener.json
+profile.local.yaml
+*.db
+*.db-shm
+*.db-wal
+
+# ---- editor / OS -----------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store

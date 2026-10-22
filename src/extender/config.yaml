@@ -1,0 +1,9 @@
+extender_type: "agent"
+extender_file: "agent_jinxed_linux.so"
+ax_file: "ax_config.axs"
+
+agent_name: "jinxed_linux"
+agent_watermark: "c0de11fe"
+listeners:
+  - "BeaconHTTP"
+multi_listeners: false
