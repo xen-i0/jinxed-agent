@@ -103,6 +103,23 @@ chmod +x jinxed_amd64
 The session appears in the client with the Linux hostname, distro, kernel and
 architecture.
 
+### Headless deployment (REST API)
+
+The official client is not required. `scripts/deploy.py` logs in, creates a
+`BeaconHTTP` listener, builds the payload through the extender and (with
+`--run`) starts it:
+
+```bash
+pip install httpx
+ADAPTIX_BASE=https://127.0.0.1:7876/endpoint ADAPTIX_USER=operator1 ADAPTIX_PASS='...' \
+  ./scripts/deploy.py --listener linux-http --callback 192.168.1.3 --port 8080 \
+      --arch amd64 --out /tmp/jinxed_amd64 --run
+```
+
+It uses exactly the endpoints the AdaptixC2 MCP server and the Qt client use
+(`/login`, `/listener/create`, `/agent/generate`), so it behaves identically to
+a GUI build.
+
 ### Standalone agent build (no teamserver)
 
 The agent compiles on its own, but a binary built from the checked-in
@@ -212,7 +229,7 @@ byte-exact 320 KB download and a live PTY session.
 
 | Symptom | Cause / fix |
 | --- | --- |
-| `plugin was built with a different version of package …` | Toolchain/flag mismatch. Rebuild with the teamserver's Go version and `GOEXPERIMENT`; **never** build the plugin with `-trimpath`. |
+| `plugin was built with a different version of package …` | Toolchain, flag **or module-cache** mismatch. Go embeds the absolute module path in package hashes, so a server built as `root` (`/root/go/pkg/mod`) rejects plugins built as another user (`~/go/pkg/mod`) even with identical versions. Build the server and every plugin as the same user, with the same Go binary and `GOEXPERIMENT`; **never** build the plugin with `-trimpath`. |
 | `plugin.Open(...): realpath failed` | `extender_file` in `config.yaml` does not exist in the extender directory. |
 | Payload build fails with `agent source not found` | `dist/src_agent` is missing — run `make` in `src/extender`, or set `JINXED_AGENT_SRC=/path/to/src/agent`. |
 | Session registers but no commands work | Endianness or codepage regression. Verify `src/extender/pl_packer.go` parses **big-endian** agent output and `PackArray` writes **little-endian** task input. |

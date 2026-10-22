@@ -144,6 +144,11 @@ agree on argument order; there is no runtime schema negotiation.
 * **No `-trimpath` for the plugin.** Package build IDs must match the server's.
   `-trimpath` changes them and the loader rejects the plugin with
   `plugin was built with a different version of package …`.
+* **Same build user / module cache.** Go embeds absolute module paths in package
+  hashes. A teamserver compiled as `root` (`GOMODCACHE=/root/go/pkg/mod`) cannot
+  load a plugin compiled as another user from `~/go/pkg/mod`, even with the same
+  Go version and `axc2` version. Build the server and all extenders in one
+  environment, or rebuild the server as the user who builds the plugins.
 * **Agent side is unconstrained.** `BuildPayload` uses `-trimpath`, `CGO_ENABLED=0`
   and `-ldflags="-s -w"`, producing a static ELF that runs on any Linux with a
   matching architecture.
