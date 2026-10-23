@@ -13,8 +13,6 @@ The wire format matches the shipped beacon: same opcodes, same RC4, same little-
 
 There are 22 cross-platform commands plus 8 Linux-specific ones. That covers async process jobs, a real PTY terminal, chunked download and upload, SOCKS4a/5 and port forwarding. The agent is static and uses only the Go standard library (`CGO_ENABLED=0`). It cross-compiles to `amd64`, `arm64`, `386` and `arm`. Beacon behavior is the same as the Windows agent: sleep and jitter, working hours, kill date, interactive mode, output batching, immediate beacon when output is pending, per-session keys.
 
-The repository includes an in-process protocol test that builds a real agent, runs it against a listener implementation and exercises every command (see [Testing](#testing)). The extender has also been loaded by a stock AdaptixC2 v1.2 teamserver and registered an agent against it.
-
 ## Screenshot
 
 ![Jinxed session](jinxed-session.png)
