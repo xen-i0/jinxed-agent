@@ -15,6 +15,10 @@ There are 22 cross-platform commands plus 8 Linux-specific ones. That covers asy
 
 The repository includes an in-process protocol test that builds a real agent, runs it against a listener implementation and exercises every command (see [Testing](#testing)). The extender has also been loaded by a stock AdaptixC2 v1.2 teamserver and registered an agent against it.
 
+## Screenshot
+
+![Jinxed session](jinxed-session.png)
+
 ## Feature matrix
 
 | Capability | Windows beacon | Jinxed Linux |
