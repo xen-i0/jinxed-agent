@@ -30,3 +30,6 @@ profile.local.yaml
 *.swp
 *~
 .DS_Store
+
+# local-only operator helper (kept on the operator machine, never published)
+scripts/
