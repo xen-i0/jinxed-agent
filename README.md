@@ -1,6 +1,6 @@
 # Jinxed, a native Linux agent for AdaptixC2
 
-Jinxed is a native POSIX agent for [AdaptixC2](https://github.com/Adaptix-Framework/AdaptixC2), packaged as a teamserver extender. It implements the Adaptix beacon wire protocol on Linux instead of emulating Windows behavior. Sessions, tasking, file and process browsers, downloads, jobs, tunnels and the remote terminal all work through the stock teamserver and client. Windows-only primitives (BOF, token impersonation, SMB/TCP pivots, registry, WMI) are not implemented.
+Jinxed is a Linux agent for [AdaptixC2](https://github.com/Adaptix-Framework/AdaptixC2), packaged as a teamserver extender. It implements the Adaptix beacon wire protocol on Linux instead of emulating Windows behavior. Sessions, tasking, file and process browsers, downloads, jobs, tunnels and the remote terminal all work through the stock teamserver and client. Windows-only primitives (BOF, token impersonation, SMB/TCP pivots, registry, WMI) are not implemented.
 
 ```
    Adaptix client  ──►  Teamserver  ──►  BeaconHTTP listener  ──►  Jinxed agent
