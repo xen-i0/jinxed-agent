@@ -1,8 +1,6 @@
-# Jinxed — native Linux agent for AdaptixC2
+# Jinxed, a native Linux agent for AdaptixC2
 
-A production-grade, **native POSIX** agent for the [AdaptixC2](https://github.com/Adaptix-Framework/AdaptixC2) command-and-control framework, packaged as a drop-in extender.
-
-Jinxed re-implements the Adaptix *beacon* wire protocol for Linux instead of emulating Windows behaviour. Sessions, tasking, browsers, downloads, jobs, tunnels and the remote terminal all work through the stock teamserver and stock client; only the platform-specific primitives (BOF, token impersonation, SMB/TCP pivots, registry/WMI) are absent because POSIX has no equivalent.
+Jinxed is a native POSIX agent for [AdaptixC2](https://github.com/Adaptix-Framework/AdaptixC2), packaged as a teamserver extender. It implements the Adaptix beacon wire protocol on Linux instead of emulating Windows behavior. Sessions, tasking, file and process browsers, downloads, jobs, tunnels and the remote terminal all work through the stock teamserver and client. Windows-only primitives (BOF, token impersonation, SMB/TCP pivots, registry, WMI) are not implemented.
 
 ```
    Adaptix client  ──►  Teamserver  ──►  BeaconHTTP listener  ──►  Jinxed agent
@@ -11,60 +9,57 @@ Jinxed re-implements the Adaptix *beacon* wire protocol for Linux instead of emu
             (command tree)  └── profiles / pack / unpack / build
 ```
 
-## Highlights
+The wire format matches the shipped beacon: same opcodes, same RC4, same little-endian input and big-endian output framing. The teamserver cannot tell the difference, and the GUI renders Linux sessions with its native file and process browsers.
 
-* **Byte-compatible protocol** — same opcodes, same RC4 crypto, same LE/BE framing as the shipped beacon. The teamserver cannot tell the difference; the GUI renders Linux sessions with native file and process browsers.
-* **22 cross-platform commands + 8 Linux-native additions**, including asynchronous process jobs, PTY-backed remote terminals, chunked download/upload, SOCKS4a/SOCKS5 and bidirectional port forwarding.
-* **Static, dependency-free agent** — pure Go standard library, `CGO_ENABLED=0`, cross-compiles to `amd64`, `arm64`, `386` and `arm`.
-* **Real beacon behaviour** — sleep + jitter, working-time windows, kill date, interactive mode, output batching, immediate beacon when output is pending, per-session keys.
-* **Verified end to end** — the repository ships an in-process protocol test that builds a real agent, runs it against a faithful listener implementation and exercises every command (see [Testing](#testing)). The extender has also been loaded by, and registered an agent with, a stock AdaptixC2 v1.2 teamserver.
+There are 22 cross-platform commands plus 8 Linux-specific ones. That covers async process jobs, a real PTY terminal, chunked download and upload, SOCKS4a/5 and port forwarding. The agent is static and uses only the Go standard library (`CGO_ENABLED=0`). It cross-compiles to `amd64`, `arm64`, `386` and `arm`. Beacon behavior is the same as the Windows agent: sleep and jitter, working hours, kill date, interactive mode, output batching, immediate beacon when output is pending, per-session keys.
+
+The repository includes an in-process protocol test that builds a real agent, runs it against a listener implementation and exercises every command (see [Testing](#testing)). The extender has also been loaded by a stock AdaptixC2 v1.2 teamserver and registered an agent against it.
 
 ## Feature matrix
 
 | Capability | Windows beacon | Jinxed Linux |
 | --- | :---: | :---: |
-| HTTP(S) transport, proxy, URI/UA/Host rotation | ✅ | ✅ |
-| TCP / SMB / DNS transports | ✅ | — (Windows-only transports) |
-| Registration, session key, sleep/jitter/working-time/killdate | ✅ | ✅ |
-| File browser (`ls`, `cat`, `cp`, `mv`, `rm`, `mkdir`, `chmod`, `pwd`, `cd`) | ✅ | ✅ |
-| Process browser (`ps list`, `ps kill`, `ps run`) | ✅ | ✅ |
-| Output-capturing process jobs, job list/kill | ✅ | ✅ |
-| Remote shell / terminal | ✅ (`cmd.exe`) | ✅ (`/bin/sh`, real PTY) |
-| Download with pause/resume/cancel | ✅ | ✅ |
-| Upload (1 MiB staging) | ✅ | ✅ |
-| SOCKS4a / SOCKS5 proxy, local & reverse port forwarding | ✅ | ✅ |
-| Environment manager (`env`) | — | ✅ |
-| Socket table (`netstat`), interfaces (`ifconfig`) | — | ✅ |
-| Host metadata (`sysinfo`, `uname`, `users`) | partial | ✅ |
-| Service control (`service`) | — | ✅ |
-| BOF, token impersonation, pivots, registry, WMI, injection | ✅ | — |
+| HTTP(S) transport, proxy, URI/UA/Host rotation | yes | yes |
+| TCP / SMB / DNS transports | yes | no (Windows-only transports) |
+| Registration, session key, sleep/jitter/working-time/killdate | yes | yes |
+| File browser (`ls`, `cat`, `cp`, `mv`, `rm`, `mkdir`, `chmod`, `pwd`, `cd`) | yes | yes |
+| Process browser (`ps list`, `ps kill`, `ps run`) | yes | yes |
+| Output-capturing process jobs, job list/kill | yes | yes |
+| Remote shell / terminal | yes (`cmd.exe`) | yes (`/bin/sh`, real PTY) |
+| Download with pause/resume/cancel | yes | yes |
+| Upload (1 MiB staging) | yes | yes |
+| SOCKS4a / SOCKS5 proxy, local and reverse port forwarding | yes | yes |
+| Environment manager (`env`) | no | yes |
+| Socket table (`netstat`), interfaces (`ifconfig`) | no | yes |
+| Host metadata (`sysinfo`, `uname`, `users`) | partial | yes |
+| Service control (`service`) | no | yes |
+| BOF, token impersonation, pivots, registry, WMI, injection | yes | no |
 
-The full audit — every discovered command, its opcode, its request/response layout and the reason for each exclusion — is in [`docs/COMMAND_MATRIX.md`](docs/COMMAND_MATRIX.md). The byte-level contract is in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+The full audit (every discovered command, its opcode, its request/response layout and the reason for each exclusion) is in [`docs/COMMAND_MATRIX.md`](docs/COMMAND_MATRIX.md). The byte-level contract is in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ## Requirements
 
 | Component | Version |
 | --- | --- |
 | AdaptixC2 teamserver | v1.2 (module `github.com/Adaptix-Framework/axc2 v1.2.0`) |
-| Go toolchain | **exactly** the version used to build the teamserver (shipped v1.2 binary: `go1.25.4`, `GOEXPERIMENT=jsonv2,greenteagc`) |
+| Go toolchain | exactly the version used to build the teamserver (shipped v1.2 binary: `go1.25.4`, `GOEXPERIMENT=jsonv2,greenteagc`) |
 | Build host | any Linux with the Go toolchain and `sh` |
 | Target | Linux, `amd64` / `arm64` / `386` / `arm`; no libc required |
 
-> **Why the exact toolchain?** Go plugins share the runtime and package build IDs with the host binary. A different Go version, `GOEXPERIMENT` set or `-trimpath` produces an unloadable plugin (`plugin was built with a different version of package …`). The bundled `Makefile` pins the values used by AdaptixC2 v1.2; override `GOEXPERIMENT=` if your server was built differently.
+The exact toolchain matters. Go plugins share the runtime and package build IDs with the host binary. A different Go version, a different `GOEXPERIMENT` set or `-trimpath` produces an unloadable plugin (`plugin was built with a different version of package …`). The bundled `Makefile` pins the values used by AdaptixC2 v1.2. Override `GOEXPERIMENT=` if your server was built differently.
 
-## Quick start
+## Install
 
-### 1. Build the extender
+### Build the extender
 
 ```bash
 cd src/extender
 make            # -> dist/agent_jinxed_linux.so, dist/config.yaml, dist/ax_config.axs, dist/src_agent/
 ```
 
-`make` stages the agent source into `dist/src_agent` because `BuildPayload`
-compiles payloads from that directory at runtime.
+`make` stages the agent source into `dist/src_agent`. `BuildPayload` compiles payloads from that directory at runtime.
 
-### 2. Install it into the teamserver
+### Add it to the teamserver
 
 ```bash
 # from the directory that contains your teamserver profile.yaml
@@ -81,15 +76,11 @@ Teamserver:
     - "extenders/jinxed_linux/config.yaml"      # <-- add this
 ```
 
-Restart the teamserver. The startup log should not contain a `failed to open plugin` line, and clients receive the `jinxed_linux` command tree automatically (the teamserver distributes `ax_config.axs`).
+Restart the teamserver. The startup log should not contain a `failed to open plugin` line. Clients receive the `jinxed_linux` command tree automatically; the teamserver distributes `ax_config.axs`.
 
-### 3. Build a payload
+### Build a payload
 
-In the Adaptix client: **Payloads → Create → `jinxed_linux`**, choose a
-`BeaconHTTP` listener, architecture (`amd64`, `arm64`, `386`, `arm`), sleep,
-jitter, optional kill date / working time, then **Build**. The extender
-cross-compiles the agent on the teamserver host and returns a static ELF named
-`jinxed_<arch>`.
+In the Adaptix client: **Payloads → Create → `jinxed_linux`**, choose a `BeaconHTTP` listener, architecture (`amd64`, `arm64`, `386`, `arm`), sleep, jitter, optional kill date or working time, then Build. The extender cross-compiles the agent on the teamserver host and returns a static ELF named `jinxed_<arch>`.
 
 Run it on the target:
 
@@ -100,13 +91,11 @@ chmod +x jinxed_amd64
 ./jinxed_amd64 -version
 ```
 
-The session appears in the client with the Linux hostname, distro, kernel and
-architecture.
+The session appears in the client with the Linux hostname, distro, kernel and architecture.
 
-### Standalone agent build (no teamserver)
+### Standalone agent build
 
-The agent compiles on its own, but a binary built from the checked-in
-placeholder profile refuses to run (it has no listener configuration):
+The agent compiles on its own. A binary built from the checked-in placeholder profile refuses to run because it has no listener configuration:
 
 ```bash
 cd src/agent
@@ -114,10 +103,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o jin
 ./jinxed_amd64      # -> jinxed: embedded profile is missing or truncated
 ```
 
-To produce a runnable payload manually, use the extender build path (it injects
-the RC4 profile into `zz_profile_gen.go` before compiling). For CI or
-troubleshooting you can build against a listener profile exported from a live
-server:
+To produce a runnable payload manually, use the extender build path. It injects the RC4 profile into `zz_profile_gen.go` before compiling. For CI or troubleshooting you can build against a listener profile exported from a live server:
 
 ```bash
 cd src/extender
@@ -126,10 +112,9 @@ JINXED_AGENT_OUT=/tmp/jinxed_amd64 \
 go test -run TestBuildPayloadFromListener -v .
 ```
 
-## Command reference
+## Commands
 
-Type `help` in a session console, or see the tables below. All commands use the
-teamserver's normal argument parser (Tab-completion, validation, examples).
+Type `help` in a session console, or see the tables below. All commands use the teamserver's normal argument parser (tab completion, validation, examples).
 
 | Area | Commands |
 | --- | --- |
@@ -154,9 +139,7 @@ jinxed_linux (10.10.14.7) » sysinfo
 jinxed_linux (10.10.14.7) » interact
 ```
 
-`ps run` executes the command line directly (no implicit shell); `shell` wraps
-it in `/bin/sh -c`. Both run in their own process group and can be stopped with
-`jobs kill`.
+`ps run` executes the command line directly, with no implicit shell. `shell` wraps it in `/bin/sh -c`. Both run in their own process group and can be stopped with `jobs kill`.
 
 ## Repository layout
 
@@ -169,7 +152,7 @@ jinxed-agent/
 └── Makefile                    build / test / package helpers
 ```
 
-## Building all artefacts
+## Building
 
 ```bash
 make            # extender plugin + staged dist/
@@ -178,8 +161,7 @@ make test       # full end-to-end protocol test
 make clean
 ```
 
-Cross-compilation of real payloads is performed by the extender at build time
-with `GOOS=linux GOARCH=<arch> CGO_ENABLED=0`. Manual equivalent:
+Real payloads are cross-compiled by the extender at build time with `GOOS=linux GOARCH=<arch> CGO_ENABLED=0`. Manual equivalent:
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -buildvcs=false \
@@ -203,23 +185,20 @@ Expected output:
 --- PASS: TestEndToEnd (78.29s)
 ```
 
-The harness implements the BeaconHTTP handshake in-process (heartbeat header,
-RC4, page templating), builds the agent with the production `BuildPayload`
-path, runs it as a child process and asserts every command, including a
-byte-exact 320 KB download and a live PTY session.
+The harness implements the BeaconHTTP handshake in-process: heartbeat header, RC4, page templating. It builds the agent through the production `BuildPayload` path, runs it as a child process and checks every command, including a byte-exact 320 KB download and a live PTY session.
 
 ## Troubleshooting
 
 | Symptom | Cause / fix |
 | --- | --- |
-| `plugin was built with a different version of package …` | Toolchain, flag **or module-cache** mismatch. Go embeds the absolute module path in package hashes, so a server built as `root` (`/root/go/pkg/mod`) rejects plugins built as another user (`~/go/pkg/mod`) even with identical versions. Build the server and every plugin as the same user, with the same Go binary and `GOEXPERIMENT`; **never** build the plugin with `-trimpath`. |
+| `plugin was built with a different version of package …` | Toolchain, flag or module-cache mismatch. Go embeds the absolute module path in package hashes, so a server built as `root` (`/root/go/pkg/mod`) rejects plugins built as another user (`~/go/pkg/mod`) even with identical versions. Build the server and every plugin as the same user, with the same Go binary and `GOEXPERIMENT`. Do not build the plugin with `-trimpath`. |
 | `plugin.Open(...): realpath failed` | `extender_file` in `config.yaml` does not exist in the extender directory. |
-| Payload build fails with `agent source not found` | `dist/src_agent` is missing — run `make` in `src/extender`, or set `JINXED_AGENT_SRC=/path/to/src/agent`. |
-| Session registers but no commands work | Endianness or codepage regression. Verify `src/extender/pl_packer.go` parses **big-endian** agent output and `PackArray` writes **little-endian** task input. |
-| Agent registers, then the page returns 404 to commands | The listener's `page-payload` was edited after the payload was built; rebuild the payload so the prefix/suffix lengths match. |
+| Payload build fails with `agent source not found` | `dist/src_agent` is missing. Run `make` in `src/extender`, or set `JINXED_AGENT_SRC=/path/to/src/agent`. |
+| Session registers but no commands work | Endianness or codepage regression. Verify `src/extender/pl_packer.go` parses big-endian agent output and `PackArray` writes little-endian task input. |
+| Agent registers, then the page returns 404 to commands | The listener's `page-payload` was edited after the payload was built. Rebuild the payload so the prefix and suffix lengths match. |
 | Downloads stall | Check `profile download.chunksize` and that the teamserver can write to `data/download`. |
-| Terminal shows no output | The target needs `/dev/ptmx` and `/dev/pts`; containers without a devpts mount fall back to `EPERM` on shell start (reported in the terminal). |
-| `socks`/`lportfwd` connect but no data | Agent-side tunnel traffic uses the task-id field as a channel id; ensure the extender's `ProcessData` tunnel cases are intact. |
+| Terminal shows no output | The target needs `/dev/ptmx` and `/dev/pts`. Containers without a devpts mount fall back to `EPERM` on shell start (reported in the terminal). |
+| `socks`/`lportfwd` connect but no data | Agent-side tunnel traffic uses the task-id field as a channel id. Check that the extender's `ProcessData` tunnel cases are intact. |
 
 ## Compatibility
 
@@ -234,10 +213,6 @@ byte-exact 320 KB download and a live PTY session.
 
 ## Legal
 
-This software is intended **exclusively** for authorized security testing,
-red-team engagements, CTF environments and research on systems you own or have
-explicit written permission to test. Unauthorized use against systems you do
-not own is illegal in most jurisdictions.
+This software is for authorized security testing, red-team engagements, CTF environments and research on systems you own or have explicit written permission to test. Unauthorized use against systems you do not own is illegal in most jurisdictions.
 
-Licensed under the GNU General Public License v3.0, matching AdaptixC2. See
-[`LICENSE`](LICENSE).
+Licensed under the GNU General Public License v3.0, same as AdaptixC2. See [`LICENSE`](LICENSE).
