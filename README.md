@@ -183,6 +183,6 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -buildvcs=false \
 
 ## Legal
 
-This software is for authorized security testing, red-team engagements, CTF environments and research on systems you own or have explicit written permission to test. Unauthorized use against systems you do not own is illegal in most jurisdictions.
+This software is for authorized security testing, red-team engagements, CTF environments and research on systems you own or have explicit permission.
 
-Licensed under the GNU General Public License v3.0, same as AdaptixC2. See [`LICENSE`](LICENSE).
+Licensed under the GNU General Public License v3.0, See [`LICENSE`](LICENSE).
