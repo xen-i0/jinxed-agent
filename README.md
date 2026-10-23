@@ -168,38 +168,6 @@ CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -buildvcs=false \
   -ldflags="-s -w" -o jinxed_arm64 .
 ```
 
-## Testing
-
-```bash
-cd src/extender
-go test -run TestEndToEnd -v .
-```
-
-Expected output:
-
-```
-=== RUN   TestEndToEnd
-    e2e_test.go: built jinxed_amd64: 6512824 bytes
-    e2e_test.go: listener up on 127.0.0.1:36791
-    e2e_test.go: session: vader darth Kali GNU/Linux Rolling 6.18.12 amd64 x64
---- PASS: TestEndToEnd (78.29s)
-```
-
-The harness implements the BeaconHTTP handshake in-process: heartbeat header, RC4, page templating. It builds the agent through the production `BuildPayload` path, runs it as a child process and checks every command, including a byte-exact 320 KB download and a live PTY session.
-
-## Troubleshooting
-
-| Symptom | Cause / fix |
-| --- | --- |
-| `plugin was built with a different version of package …` | Toolchain, flag or module-cache mismatch. Go embeds the absolute module path in package hashes, so a server built as `root` (`/root/go/pkg/mod`) rejects plugins built as another user (`~/go/pkg/mod`) even with identical versions. Build the server and every plugin as the same user, with the same Go binary and `GOEXPERIMENT`. Do not build the plugin with `-trimpath`. |
-| `plugin.Open(...): realpath failed` | `extender_file` in `config.yaml` does not exist in the extender directory. |
-| Payload build fails with `agent source not found` | `dist/src_agent` is missing. Run `make` in `src/extender`, or set `JINXED_AGENT_SRC=/path/to/src/agent`. |
-| Session registers but no commands work | Endianness or codepage regression. Verify `src/extender/pl_packer.go` parses big-endian agent output and `PackArray` writes little-endian task input. |
-| Agent registers, then the page returns 404 to commands | The listener's `page-payload` was edited after the payload was built. Rebuild the payload so the prefix and suffix lengths match. |
-| Downloads stall | Check `profile download.chunksize` and that the teamserver can write to `data/download`. |
-| Terminal shows no output | The target needs `/dev/ptmx` and `/dev/pts`. Containers without a devpts mount fall back to `EPERM` on shell start (reported in the terminal). |
-| `socks`/`lportfwd` connect but no data | Agent-side tunnel traffic uses the task-id field as a channel id. Check that the extender's `ProcessData` tunnel cases are intact. |
-
 ## Compatibility
 
 | Item | Value |
