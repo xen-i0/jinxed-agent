@@ -211,3 +211,8 @@ The harness implements the BeaconHTTP handshake in-process: heartbeat header, RC
 | Agent OS reported | `OS_LINUX` (`2`), codepage 65001 (UTF-8) |
 | Architectures | `amd64`, `arm64`, `386`, `arm` |
 
+## Legal
+
+This software is for authorized security testing, red-team engagements, CTF environments and research on systems you own or have explicit written permission to test. Unauthorized use against systems you do not own is illegal in most jurisdictions.
+
+Licensed under the GNU General Public License v3.0, same as AdaptixC2. See [`LICENSE`](LICENSE).
