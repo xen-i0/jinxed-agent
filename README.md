@@ -118,7 +118,7 @@ go test -run TestBuildPayloadFromListener -v .
 
 Type `help` in a session console, or see the tables below. All commands use the teamserver's normal argument parser (tab completion, validation, examples).
 
-| Area | Commands |
+| Category | Commands |
 | --- | --- |
 | Files | `cat`, `cd`, `ls`, `pwd`, `cp`, `mv`, `rm`, `mkdir`, `chmod`, `disks` |
 | Transfer | `download`, `upload`, `exfil start\|stop\|cancel <fid>` |
